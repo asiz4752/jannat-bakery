@@ -67,6 +67,7 @@ const card = (o) => {
     <div class="flex items-start justify-between">
       <div>
         <p class="text-3xl font-extrabold leading-none">TABLE ${esc(o.table)}</p>
+        ${o.customerName ? `<p class="text-base font-semibold text-brand-700 mt-1">${esc(o.customerName)}</p>` : ""}
         <p class="text-xs text-brand-500 font-mono mt-1">${esc(o.orderCode || "")}</p>
       </div>
       <div class="text-right">

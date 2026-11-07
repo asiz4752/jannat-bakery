@@ -11,6 +11,7 @@ const $ = (id) => document.getElementById(id);
 /* ---------- State ---------- */
 const state = {
   table: null,
+  customerName: "",
   menu: [],            // all menu docs
   cart: {},            // { itemId: {id,name,price,qty} }
   category: "All",
@@ -23,6 +24,7 @@ configBanner();
 /* ---------- Table number detection ---------- */
 const initTable = () => {
   state.table = null;
+  $("customer-name").value = sessionStorage.getItem("jb_customer_name") || "";
   $("table-modal").classList.remove("hidden");
   $("table-input").focus();
   $("menu-skeleton").classList.add("hidden");
@@ -39,6 +41,8 @@ const setTable = (raw) => {
     saveCart();
   }
   state.table = table;
+  state.customerName = $("customer-name").value.trim().slice(0, 60);
+  sessionStorage.setItem("jb_customer_name", state.customerName);
   sessionStorage.setItem("jb_table", state.table);
   $("table-no").textContent = state.table;
   document.querySelectorAll(".cart-table-no").forEach((el) => (el.textContent = state.table));
@@ -52,7 +56,7 @@ $("table-save").onclick = () => {
   if (!v) return toast("Please enter your table number", "err");
   setTable(v);
 };
-$("table-badge").onclick = () => { $("table-input").value = state.table ? parseInt(state.table, 10) || "" : ""; $("table-modal").classList.remove("hidden"); $("table-input").focus(); };
+$("table-badge").onclick = () => { $("table-input").value = state.table ? parseInt(state.table, 10) || "" : ""; $("customer-name").value = state.customerName; $("table-modal").classList.remove("hidden"); $("table-input").focus(); };
 
 /* ---------- Cart persistence ---------- */
 const saveCart = () => { try { localStorage.setItem("jb_cart", JSON.stringify(state.cart)); } catch (e) {} };
@@ -247,6 +251,7 @@ $("place-order").onclick = async () => {
     const ref = await addDoc(ordersCol, {
       orderCode: code,
       table: state.table,
+      customerName: state.customerName,
       items: lines.map((l) => ({ id: l.id, name: l.name, price: l.price, qty: l.qty })),
       subtotal: bill.subtotal, tax: bill.tax, total: bill.total,
       note: $("order-note").value.trim(),

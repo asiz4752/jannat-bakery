@@ -119,7 +119,7 @@ $("order-search").oninput = (e) => { state.search = e.target.value.trim().toLowe
 
 const renderOrders = () => {
   let list = state.orders.filter((o) => state.filter === "all" ? true : state.filter === "active" ? ["pending", "preparing", "ready"].includes(o.status) : o.status === state.filter);
-  if (state.search) list = list.filter((o) => (`table ${o.table} ${o.orderCode}`).toLowerCase().includes(state.search) || String(o.table) === state.search.replace(/^0+/, ""));
+  if (state.search) list = list.filter((o) => (`table ${o.table} ${o.orderCode} ${o.customerName || ""}`).toLowerCase().includes(state.search) || String(o.table) === state.search.replace(/^0+/, ""));
 
   $("orders-empty").classList.toggle("hidden", list.length > 0);
   $("orders-grid").innerHTML = list.map((o) => {
@@ -130,6 +130,7 @@ const renderOrders = () => {
         <div>
           <p class="text-[11px] uppercase tracking-wider text-brand-400 font-semibold">Order ${esc(o.orderCode || o.id.slice(0, 6))}</p>
           <h4 class="text-xl font-bold text-brand-900 mt-1">Table ${esc(o.table)}</h4>
+          ${o.customerName ? `<p class="text-sm text-brand-500 mt-0.5">${esc(o.customerName)}</p>` : ""}
         </div>
         ${statusBadge(o.status)}
       </div>
