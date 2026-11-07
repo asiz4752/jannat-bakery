@@ -1,0 +1,123 @@
+/* Jannat Bakery – shared custom styles (on top of Tailwind) */
+body { font-family: Inter, system-ui, sans-serif; background: #fbf7f2; color: #3f2616; -webkit-tap-highlight-color: transparent; }
+.font-display { font-family: 'Playfair Display', serif; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Skeleton loading shimmer */
+.skeleton { background: linear-gradient(90deg, #f3e9dc 25%, #fbf7f2 50%, #f3e9dc 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: .75rem; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* Micro-interactions */
+.card-lift { transition: transform .2s ease, box-shadow .2s ease; }
+.card-lift:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -10px rgba(94, 59, 37, .35); }
+.btn-press { transition: transform .1s ease; }
+.btn-press:active { transform: scale(.95); }
+
+.toast-pop { animation: toastIn .25s ease-out; }
+@keyframes toastIn { from { opacity: 0; transform: translateY(-10px) scale(.95); } to { opacity: 1; transform: none; } }
+
+.sheet-up { animation: sheetUp .3s cubic-bezier(.2,.8,.2,1); }
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: none; } }
+.fade-in { animation: fadeIn .25s ease-out; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.pop-in { animation: popIn .35s cubic-bezier(.2,1.4,.4,1); }
+@keyframes popIn { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+.bump { animation: bump .3s ease; }
+@keyframes bump { 50% { transform: scale(1.25); } }
+
+/* New-order highlight on kitchen display */
+.new-order { animation: newOrder 1.4s ease-out 3; }
+@keyframes newOrder { 0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); } 50% { box-shadow: 0 0 0 8px rgba(245,158,11,.45); } }
+
+/* Toggle switch */
+.switch { position: relative; width: 46px; height: 26px; display: inline-block; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch .slider { position: absolute; inset: 0; background: #d6d3d1; border-radius: 999px; cursor: pointer; transition: .25s; }
+.switch .slider:before { content: ""; position: absolute; height: 20px; width: 20px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .25s; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.switch input:checked + .slider { background: #16a34a; }
+.switch input:checked + .slider:before { transform: translateX(20px); }
+
+/* Progress stepper */
+.step-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; background: #e7e5e4; color: #78716c; transition: .3s; }
+.step-dot.done { background: #16a34a; color: #fff; }
+.step-dot.current { background: #d97706; color: #fff; box-shadow: 0 0 0 4px rgba(217,119,6,.25); }
+
+.pb-safe { padding-bottom: max(env(safe-area-inset-bottom), .75rem); }
+
+/* Admin dashboard */
+.admin-page { background: #f7f4ef; }
+.admin-header {
+  background: linear-gradient(110deg, #3f2616, #5e3b25 58%, #724628);
+  box-shadow: 0 8px 24px rgba(63, 38, 22, .14);
+}
+.admin-tabs { background: rgba(31, 18, 11, .26); }
+.admin-tabs .tab-btn { color: rgba(255, 255, 255, .76); transition: background .2s, color .2s; }
+.admin-tabs .tab-btn:hover { color: #fff; background: rgba(255, 255, 255, .1); }
+.admin-tabs .tab-btn.bg-amber-400 { color: #3f2616; box-shadow: 0 2px 6px rgba(31, 18, 11, .15); }
+.admin-header-link { color: rgba(255, 255, 255, .82); transition: background .2s, color .2s; }
+.admin-header-link:hover { color: #fff; background: rgba(255, 255, 255, .12); }
+.admin-logout { border: 1px solid rgba(255, 255, 255, .2); }
+.admin-page-heading { margin-bottom: 1.5rem; }
+.admin-eyebrow { color: #a8703f; font-size: .68rem; font-weight: 700; letter-spacing: .16em; }
+.admin-live-badge {
+  display: inline-flex; align-items: center; gap: .55rem; padding: .55rem .85rem;
+  background: #fff; border: 1px solid #e8dfd3; border-radius: 999px;
+  color: #64503f; font-size: .75rem; font-weight: 600; box-shadow: 0 2px 8px rgba(63, 38, 22, .04);
+}
+.admin-live-badge span { width: .5rem; height: .5rem; border-radius: 50%; background: #22a06b; box-shadow: 0 0 0 3px #e4f5eb; }
+.admin-stat-card, .admin-panel, .admin-filter-panel, .admin-order-card {
+  background: #fff; border: 1px solid #ece5dc; border-radius: 1rem;
+  box-shadow: 0 3px 12px rgba(63, 38, 22, .045);
+}
+.admin-stat-card { min-width: 0; padding: 1rem; position: relative; overflow: hidden; }
+.admin-stat-card:after { content: ""; position: absolute; width: 5rem; height: 5rem; border-radius: 50%; right: -2rem; top: -2.5rem; background: #fbf7f2; }
+.admin-stat-icon { position: relative; z-index: 1; width: 2rem; height: 2rem; display: grid; place-items: center; border-radius: .7rem; font-size: .95rem; font-weight: 700; }
+.admin-stat-icon--brown { color: #724628; background: #f4eadd; }
+.admin-stat-icon--green { color: #15803d; background: #e8f5eb; }
+.admin-stat-icon--amber { color: #b45309; background: #fff2d6; }
+.admin-stat-icon--blue { color: #2563a6; background: #eaf2fb; }
+.admin-stat-value { position: relative; z-index: 1; margin-top: .75rem; color: #3f2616; font-size: clamp(1.2rem, 2.2vw, 1.65rem); line-height: 1.15; font-weight: 700; overflow-wrap: anywhere; }
+.admin-stat-label { position: relative; z-index: 1; color: #8b7969; font-size: .75rem; margin-top: .3rem; }
+.admin-panel-icon { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: .65rem; background: #fbf7f2; color: #a8703f; font-weight: 700; }
+.admin-chart-bar { background: linear-gradient(180deg, #e5a84d, #c47b2c); transition: height .25s ease; }
+#hour-chart > div { min-width: 0; }
+.admin-top-item { display: flex; align-items: center; gap: .65rem; min-width: 0; }
+.admin-top-rank { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: .6rem; color: #8f5a31; background: #fbf3e8; font-size: .68rem; font-weight: 700; flex-shrink: 0; }
+.admin-filter-panel { padding: .9rem 1rem; }
+.admin-filter-btn { white-space: nowrap; transition: background .15s, color .15s, border-color .15s; }
+.admin-filter-btn:hover { border-color: #bf8d5e; }
+.admin-search { border-color: #e6d9ca; }
+.admin-search:focus { border-color: #bf8d5e; }
+.admin-order-card { padding: 1rem; transition: transform .2s ease, box-shadow .2s ease; }
+.admin-order-time { color: #9a8878; font-size: .72rem; margin: .45rem 0 .85rem; }
+.admin-order-time span { padding: 0 .2rem; color: #c4b8aa; }
+.admin-order-items { padding: .8rem 0; border-top: 1px solid #f1ece5; border-bottom: 1px solid #f1ece5; }
+.admin-order-items li { display: flex; gap: .75rem; }
+.admin-order-items li span:first-child { color: #564536; }
+.admin-order-note { border: 1px solid #f0dfbd; background: #fff9eb; color: #80551b; padding: .55rem .7rem; border-radius: .65rem; font-size: .75rem; }
+.admin-order-total { border-top: 1px solid #f1ece5; }
+.admin-order-primary { background: #5e3b25; color: #fff; transition: background .15s, transform .1s; }
+.admin-order-primary:hover { background: #724628; }
+.admin-order-cancel { border-color: #f0d0cc; color: #b5473b; background: #fff; }
+.admin-order-cancel:hover { background: #fff5f3; }
+.admin-menu-table { min-width: 760px; }
+.admin-menu-table thead { background: #faf7f2; font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; }
+.admin-menu-table th { padding: .85rem 1rem; font-weight: 700; }
+.admin-menu-row { border-top: 1px solid #f0ebe4; transition: background .15s; }
+.admin-menu-row:hover { background: #fdfbf8; }
+.admin-category-tag { display: inline-flex; padding: .28rem .6rem; border-radius: 999px; background: #f5eee5; color: #805a3b; font-size: .7rem; font-weight: 600; }
+.admin-price-input { border-color: #e8dfd4; }
+.admin-menu-action { background: #f7f2eb; font-size: .75rem; font-weight: 600; }
+.admin-menu-action:hover { background: #efe3d5; }
+.admin-menu-delete { background: #fff5f3; font-size: .75rem; font-weight: 600; }
+.admin-menu-delete:hover { background: #fee9e5; }
+
+@media (max-width: 767px) {
+  .admin-header > div { gap: .65rem; }
+  .admin-header > div > div:last-child { width: 100%; justify-content: flex-end; }
+  .admin-filter-panel #status-filters { flex-wrap: nowrap; overflow-x: auto; padding-bottom: .2rem; }
+  .admin-stat-card { padding: .85rem; }
+  .admin-order-card { padding: .9rem; }
+}
