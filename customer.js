@@ -16,6 +16,7 @@ const state = {
   cart: {},            // { itemId: {id,name,price,qty} }
   category: "All",
   search: "",
+  selectedItemId: null,
   trackUnsub: null
 };
 
@@ -117,13 +118,13 @@ const itemCard = (m) => {
            <button data-add="${m.id}" class="btn-press w-8 h-8 text-lg">+</button>
          </div>`;
   return `
-    <article class="card-lift flex flex-col bg-white rounded-2xl p-3 shadow-sm border border-brand-100 ${out ? "opacity-60 grayscale" : ""}">
-      <div class="w-full h-36 shrink-0 rounded-xl bg-brand-100 overflow-hidden flex items-center justify-center">${media}</div>
+    <article data-item="${m.id}" tabindex="0" aria-label="View details for ${esc(m.name)}" class="customer-item-card card-lift flex flex-col rounded-2xl p-3 cursor-pointer ${out ? "opacity-60 grayscale" : ""}">
+      <div class="customer-item-media w-full h-36 shrink-0 rounded-xl overflow-hidden flex items-center justify-center">${media}</div>
       <div class="flex-1 min-w-0 flex flex-col pt-3">
         <h3 class="font-semibold text-brand-900 leading-snug">${esc(m.name)}</h3>
         <p class="text-xs text-brand-500 line-clamp-2 mt-0.5">${esc(m.description || "")}</p>
         <div class="mt-auto pt-2 flex items-center justify-between">
-          <span class="font-bold text-brand-800">${fmt(m.price)}</span>
+          <span class="customer-item-price font-bold">${fmt(m.price)}</span>
           ${action}
         </div>
       </div>
@@ -160,7 +161,18 @@ const renderMenu = () => {
 $("menu-root").addEventListener("click", (e) => {
   const add = e.target.closest("[data-add]"), dec = e.target.closest("[data-dec]");
   if (add) changeQty(add.dataset.add, +1);
-  if (dec) changeQty(dec.dataset.dec, -1);
+  else if (dec) changeQty(dec.dataset.dec, -1);
+  else {
+    const item = e.target.closest("[data-item]");
+    if (item) showItemDetails(item.dataset.item);
+  }
+});
+$("menu-root").addEventListener("keydown", (e) => {
+  const item = e.target.closest("[data-item]");
+  if (item && e.target === item && (e.key === "Enter" || e.key === " ")) {
+    e.preventDefault();
+    showItemDetails(item.dataset.item);
+  }
 });
 $("cart-items").addEventListener("click", (e) => {
   const add = e.target.closest("[data-add]"), dec = e.target.closest("[data-dec]"), rm = e.target.closest("[data-rm]");
@@ -184,8 +196,47 @@ const changeQty = (id, delta) => {
   if (cur.qty <= 0) delete state.cart[id]; else state.cart[id] = cur;
   if (navigator.vibrate) navigator.vibrate(10);
   afterCartChange();
+  if (state.selectedItemId === id) renderItemDetails();
 };
 const afterCartChange = () => { saveCart(); renderMenu(); renderCart(); };
+
+const showItemDetails = (id) => {
+  const item = state.menu.find((m) => m.id === id);
+  if (!item) return;
+  state.selectedItemId = id;
+  renderItemDetails();
+  $("item-detail-modal").classList.remove("hidden");
+  $("item-detail-close").focus();
+};
+const renderItemDetails = () => {
+  const item = state.menu.find((m) => m.id === state.selectedItemId);
+  if (!item) return closeItemDetails();
+  const media = item.imageUrl
+    ? `<img src="${esc(item.imageUrl)}" alt="${esc(item.name)}" class="w-full h-full object-cover" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'text-7xl',textContent:'${esc(item.emoji || "🍞")}'}))" />`
+    : `<span class="text-7xl">${esc(item.emoji || "🍞")}</span>`;
+  const qty = state.cart[item.id]?.qty || 0;
+  $("detail-media").innerHTML = media;
+  $("detail-category").textContent = item.category || "Bakery";
+  $("detail-name").textContent = item.name;
+  $("detail-description").textContent = item.description || "No description available.";
+  $("detail-price").textContent = fmt(item.price);
+  $("detail-availability").textContent = item.available === false ? "Currently unavailable" : qty ? `${qty} in your order` : "Available";
+  $("detail-availability").className = `text-xs mt-1 ${item.available === false ? "text-red-600" : "text-green-700"}`;
+  $("detail-add").textContent = item.available === false ? "Sold out" : qty ? `Add another · ${qty} in order` : "Add to order";
+  $("detail-add").disabled = item.available === false;
+};
+const closeItemDetails = () => {
+  $("item-detail-modal").classList.add("hidden");
+  state.selectedItemId = null;
+};
+$("item-detail-close").onclick = closeItemDetails;
+$("item-detail-backdrop").onclick = closeItemDetails;
+$("detail-add").onclick = () => {
+  if (state.selectedItemId) changeQty(state.selectedItemId, 1);
+};
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !$("item-detail-modal").classList.contains("hidden")) closeItemDetails();
+});
 
 /* ---------- Cart UI ---------- */
 const cartLines = () => Object.values(state.cart);

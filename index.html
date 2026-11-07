@@ -11,11 +11,11 @@
   <script src="tailwind-config.js"></script>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body class="min-h-screen pb-28">
+<body class="min-h-screen pb-28 customer-page">
 
   <!-- ============ HEADER ============ -->
-  <header class="sticky top-0 z-30 bg-brand-800 text-white shadow-md">
-    <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+  <header class="customer-header sticky top-0 z-30 text-white">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <img src="Jannat%20Bakery.jpg" alt="Jannat Bakery logo" class="h-11 w-11 object-cover rounded-full border-2 border-white/80 bg-white shadow-sm" />
         <div>
@@ -24,39 +24,48 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <a href="admin.html" class="btn-press rounded-xl border border-white/25 px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/10">
+        <a href="admin.html" class="customer-admin-link btn-press rounded-xl px-3 py-1.5 text-sm font-semibold">
           Admin
         </a>
-        <button id="table-badge" class="btn-press bg-amber-400 text-brand-900 font-bold rounded-xl px-3 py-1.5 text-sm shadow">
+        <button id="table-badge" class="customer-table-badge btn-press font-bold rounded-xl px-3 py-1.5 text-sm">
           Table <span id="table-no">--</span>
         </button>
       </div>
     </div>
 
     <!-- Search -->
-    <div class="max-w-3xl mx-auto px-4 pb-3">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 pb-3">
       <div class="relative">
-        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-brand-300">🔍</span>
+        <span class="customer-search-icon absolute left-3 top-1/2 -translate-y-1/2">⌕</span>
         <input id="search" type="search" placeholder="Search cakes, snacks, coffee…"
-               class="w-full pl-9 pr-3 py-2 rounded-xl bg-white/95 text-brand-900 placeholder-brand-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+               class="customer-search w-full pl-10 pr-3 py-2.5 rounded-xl text-sm focus:outline-none" />
       </div>
     </div>
 
     <!-- Category chips -->
-    <nav id="categories" class="bg-white border-b border-brand-100 overflow-x-auto no-scrollbar">
-      <div id="cat-list" class="max-w-3xl mx-auto px-4 py-2 flex gap-2 whitespace-nowrap"></div>
+    <nav id="categories" class="customer-categories overflow-x-auto no-scrollbar">
+      <div id="cat-list" class="max-w-5xl mx-auto px-4 sm:px-6 py-2.5 flex gap-2 whitespace-nowrap"></div>
     </nav>
   </header>
 
+  <section class="customer-hero">
+    <div class="customer-hero-content max-w-5xl mx-auto px-5 sm:px-8 py-8 sm:py-11">
+      <p class="customer-hero-eyebrow">BAKED FRESH · MADE WITH LOVE</p>
+      <h2 class="font-display text-3xl sm:text-4xl leading-tight mt-2">A little sweetness<br class="sm:hidden" /> for your day.</h2>
+      <p class="text-sm sm:text-base mt-3 max-w-md">Explore our freshly prepared favorites and order right from your table.</p>
+    </div>
+    <img class="customer-hero-logo" src="Jannat%20Bakery.jpg" alt="" aria-hidden="true" />
+  </section>
+
   <!-- Active order tracker chip -->
-  <div id="track-chip" class="hidden max-w-3xl mx-auto px-4 mt-3"></div>
+  <div id="track-chip" class="hidden max-w-5xl mx-auto px-4 sm:px-6 mt-4"></div>
 
   <!-- ============ MENU ============ -->
-  <main class="max-w-3xl mx-auto px-4 pt-4">
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 pt-6">
     <div id="menu-skeleton" class="space-y-3">
       <div class="skeleton h-24"></div><div class="skeleton h-24"></div><div class="skeleton h-24"></div><div class="skeleton h-24"></div>
     </div>
-    <div id="menu-root" class="space-y-8"></div>
+    <div id="menu-root" class="customer-menu-root space-y-9"></div>
     <div id="menu-empty" class="hidden text-center text-brand-600 py-16">
       <div class="text-5xl mb-2">🍞</div>
       <p class="font-semibold">No items to show</p>
@@ -64,9 +73,30 @@
     </div>
   </main>
 
+  <!-- ============ MENU ITEM DETAILS ============ -->
+  <div id="item-detail-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="detail-name">
+    <button id="item-detail-backdrop" class="absolute inset-0 bg-black/60 fade-in" aria-label="Close item details"></button>
+    <section class="customer-detail-panel relative rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto pop-in">
+      <button id="item-detail-close" class="customer-close-button absolute top-3 right-3 z-10 w-10 h-10 rounded-full text-xl btn-press" aria-label="Close item details">✕</button>
+      <div id="detail-media" class="customer-detail-media h-56 sm:h-64 flex items-center justify-center overflow-hidden"></div>
+      <div class="p-5 sm:p-6">
+        <p id="detail-category" class="text-xs font-semibold uppercase tracking-wider text-brand-500"></p>
+        <h2 id="detail-name" class="font-display text-2xl text-brand-900 mt-1"></h2>
+        <p id="detail-description" class="text-sm leading-relaxed text-brand-600 mt-3 whitespace-pre-line"></p>
+        <div class="flex items-center justify-between gap-3 mt-5">
+          <div>
+            <p id="detail-price" class="text-xl font-bold text-brand-800"></p>
+            <p id="detail-availability" class="text-xs mt-1"></p>
+          </div>
+          <button id="detail-add" class="btn-press bg-amber-500 hover:bg-amber-600 text-white font-bold px-5 py-3 rounded-xl shadow disabled:opacity-50"></button>
+        </div>
+      </div>
+    </section>
+  </div>
+
   <!-- ============ FLOATING CART BAR ============ -->
-  <div id="cart-bar" class="hidden fixed bottom-0 inset-x-0 z-40 pb-safe px-4 pt-2 bg-gradient-to-t from-brand-50 via-brand-50/90 to-transparent">
-    <button id="open-cart" class="btn-press w-full max-w-3xl mx-auto flex items-center justify-between bg-brand-800 text-white rounded-2xl px-5 py-3.5 shadow-xl">
+  <div id="cart-bar" class="hidden fixed bottom-0 inset-x-0 z-40 pb-safe px-4 pt-4 customer-cart-bar">
+    <button id="open-cart" class="customer-cart-button btn-press w-full max-w-5xl mx-auto flex items-center justify-between rounded-2xl px-5 py-3.5">
       <span class="flex items-center gap-3">
         <span id="cart-count" class="bg-amber-400 text-brand-900 font-bold rounded-full w-7 h-7 flex items-center justify-center text-sm">0</span>
         <span class="font-semibold">View Cart</span>
@@ -78,7 +108,7 @@
   <!-- ============ CART DRAWER ============ -->
   <div id="cart-modal" class="hidden fixed inset-0 z-50">
     <div id="cart-backdrop" class="absolute inset-0 bg-black/50 fade-in"></div>
-    <div class="sheet-up absolute bottom-0 inset-x-0 max-w-3xl mx-auto bg-white rounded-t-3xl max-h-[88vh] flex flex-col shadow-2xl">
+    <div class="customer-cart-drawer sheet-up absolute bottom-0 inset-x-0 max-w-3xl mx-auto rounded-t-3xl max-h-[88vh] flex flex-col shadow-2xl">
       <div class="px-5 pt-4 pb-3 border-b border-brand-100 flex items-center justify-between">
         <div>
           <h2 class="font-display text-xl text-brand-800">Your Order</h2>
