@@ -30,6 +30,7 @@ const setTab = (t) => {
   document.querySelectorAll(".tab-btn").forEach((b) => {
     const on = b.dataset.tab === t;
     b.classList.toggle("bg-amber-400", on); b.classList.toggle("text-brand-900", on);
+    b.setAttribute("aria-selected", String(on));
   });
 };
 document.querySelectorAll(".tab-btn").forEach((b) => (b.onclick = () => setTab(b.dataset.tab)));
@@ -39,6 +40,9 @@ let booted = false;
 function boot() {
   if (booted) return; booted = true;
   setTab("orders");
+  $("admin-date").textContent = new Intl.DateTimeFormat("en-IN", {
+    weekday: "short", day: "numeric", month: "short", year: "numeric"
+  }).format(new Date());
 
   onSnapshot(menuCol, (snap) => {
     state.menu = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.category || "").localeCompare(b.category || "") || a.name.localeCompare(b.name));
@@ -158,13 +162,15 @@ $("orders-grid").addEventListener("click", async (e) => {
 
 /* ---------- Menu management ---------- */
 const renderMenu = () => {
+  const available = state.menu.filter((m) => m.available !== false).length;
+  $("menu-summary").textContent = `${state.menu.length} items · ${available} available · ${state.menu.length - available} out of stock`;
   $("menu-empty").classList.toggle("hidden", state.menu.length > 0);
   $("seed-btn").classList.toggle("hidden", state.menu.length > 0);
   $("cat-options").innerHTML = [...new Set(state.menu.map((m) => m.category))].map((c) => `<option value="${esc(c)}">`).join("");
 
   $("menu-body").innerHTML = state.menu.map((m) => `
     <tr class="admin-menu-row">
-      <td class="px-4 py-3.5">
+      <td data-label="Item" class="px-4 py-3.5">
         <div class="flex items-center gap-3">
           <div class="w-11 h-11 rounded-lg bg-brand-100 flex items-center justify-center overflow-hidden text-2xl shrink-0">
             ${m.imageUrl ? `<img src="${esc(m.imageUrl)}" class="w-full h-full object-cover" alt="" />` : esc(m.emoji || "🍞")}
@@ -172,15 +178,15 @@ const renderMenu = () => {
           <div class="min-w-0"><p class="font-semibold text-brand-900">${esc(m.name)}</p><p class="text-xs text-brand-500 truncate max-w-xs">${esc(m.description || "")}</p></div>
         </div>
       </td>
-      <td class="px-4 py-3.5"><span class="admin-category-tag">${esc(m.category)}</span></td>
-      <td class="px-4 py-3.5">
+      <td data-label="Category" class="px-4 py-3.5"><span class="admin-category-tag">${esc(m.category)}</span></td>
+      <td data-label="Price" class="px-4 py-3.5">
         <input data-price="${m.id}" type="number" min="0" step="0.5" value="${m.price}" class="admin-price-input w-24 px-2 py-1.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-amber-400" title="Edit price, press Enter or click away to save" />
       </td>
-      <td class="px-4 py-3.5">
+      <td data-label="Availability" class="px-4 py-3.5">
         <label class="flex items-center gap-2"><span class="switch"><input data-avail="${m.id}" type="checkbox" ${m.available !== false ? "checked" : ""} /><span class="slider"></span></span>
         <span class="text-xs font-semibold ${m.available !== false ? "text-green-700" : "text-red-600"}">${m.available !== false ? "Available" : "Out of Stock"}</span></label>
       </td>
-      <td class="px-4 py-3.5 text-right whitespace-nowrap">
+      <td data-label="Actions" class="px-4 py-3.5 text-right whitespace-nowrap">
         <button data-edit="${m.id}" class="admin-menu-action px-2.5 py-1.5 text-brand-700 rounded-lg">Edit</button>
         <button data-del="${m.id}" class="admin-menu-delete px-2.5 py-1.5 text-red-600 rounded-lg" aria-label="Delete ${esc(m.name)}">Delete</button>
       </td>

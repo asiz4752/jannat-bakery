@@ -35,8 +35,8 @@
         </div>
       </div>
       <nav class="admin-tabs flex gap-1 rounded-xl p-1" aria-label="Dashboard sections">
-        <button data-tab="orders" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold">Orders</button>
-        <button data-tab="menu" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold">Menu</button>
+        <button data-tab="orders" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold" aria-selected="true">Orders</button>
+        <button data-tab="menu" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold" aria-selected="false">Menu</button>
       </nav>
       <div class="flex items-center gap-2 text-sm">
         <a href="kitchen.html" target="_blank" rel="noopener" class="admin-header-link px-3 py-2 rounded-lg">Kitchen</a>
@@ -52,6 +52,7 @@
     <section id="tab-orders">
       <div class="admin-page-heading flex flex-wrap items-end justify-between gap-4">
         <div>
+          <p class="admin-eyebrow">BAKERY OPERATIONS · <span id="admin-date"></span></p>
           <h2 class="font-display text-3xl sm:text-4xl text-brand-900 mt-1">Order overview</h2>
           <p class="text-sm text-brand-500 mt-2">Track today's performance and keep every order moving.</p>
         </div>
@@ -105,7 +106,7 @@
         <div>
           <p class="admin-eyebrow">CATALOG MANAGEMENT</p>
           <h2 class="font-display text-3xl sm:text-4xl text-brand-900 mt-1">Menu items</h2>
-          <p class="text-sm text-brand-500 mt-2">Update prices, availability and product details.</p>
+          <p id="menu-summary" class="text-sm text-brand-500 mt-2">Update prices, availability and product details.</p>
         </div>
         <div class="flex flex-wrap gap-2">
           <button id="seed-btn" class="hidden btn-press px-4 py-2.5 rounded-xl border border-brand-200 text-brand-700 text-sm font-semibold bg-white hover:bg-brand-50">Load sample menu</button>
