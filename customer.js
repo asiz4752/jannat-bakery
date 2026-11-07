@@ -117,9 +117,9 @@ const itemCard = (m) => {
            <button data-add="${m.id}" class="btn-press w-8 h-8 text-lg">+</button>
          </div>`;
   return `
-    <article class="card-lift flex gap-3 bg-white rounded-2xl p-3 shadow-sm border border-brand-100 ${out ? "opacity-60 grayscale" : ""}">
-      <div class="w-24 h-24 shrink-0 rounded-xl bg-brand-100 overflow-hidden flex items-center justify-center">${media}</div>
-      <div class="flex-1 min-w-0 flex flex-col">
+    <article class="card-lift flex flex-col bg-white rounded-2xl p-3 shadow-sm border border-brand-100 ${out ? "opacity-60 grayscale" : ""}">
+      <div class="w-full h-36 shrink-0 rounded-xl bg-brand-100 overflow-hidden flex items-center justify-center">${media}</div>
+      <div class="flex-1 min-w-0 flex flex-col pt-3">
         <h3 class="font-semibold text-brand-900 leading-snug">${esc(m.name)}</h3>
         <p class="text-xs text-brand-500 line-clamp-2 mt-0.5">${esc(m.description || "")}</p>
         <div class="mt-auto pt-2 flex items-center justify-between">
@@ -149,7 +149,7 @@ const renderMenu = () => {
   const html = Object.entries(groups).map(([cat, list]) => `
     <section>
       <h2 class="font-display text-xl text-brand-800 mb-3 flex items-center gap-2"><span class="h-px flex-1 bg-brand-200"></span>${esc(cat)}<span class="h-px flex-1 bg-brand-200"></span></h2>
-      <div class="space-y-3">${list.map(itemCard).join("")}</div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">${list.map(itemCard).join("")}</div>
     </section>`).join("");
 
   $("menu-root").innerHTML = html;
