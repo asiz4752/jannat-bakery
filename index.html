@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#5e3b25" />
+  <title>Jannat Bakery – Order at Your Table</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="tailwind-config.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="min-h-screen pb-28">
+
+  <!-- ============ HEADER ============ -->
+  <header class="sticky top-0 z-30 bg-brand-800 text-white shadow-md">
+    <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="Jannat%20Bakery.jpg" alt="Jannat Bakery logo" class="h-11 w-11 object-cover rounded-full border-2 border-white/80 bg-white shadow-sm" />
+        <div>
+          <h1 class="font-display text-xl leading-tight">Jannat Bakery</h1>
+          <p class="text-[11px] text-brand-200 tracking-wide">Fresh from our oven to your table</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="table-badge" class="btn-press bg-amber-400 text-brand-900 font-bold rounded-xl px-3 py-1.5 text-sm shadow">
+          Table <span id="table-no">--</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="max-w-3xl mx-auto px-4 pb-3">
+      <div class="relative">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-brand-300">🔍</span>
+        <input id="search" type="search" placeholder="Search cakes, snacks, coffee…"
+               class="w-full pl-9 pr-3 py-2 rounded-xl bg-white/95 text-brand-900 placeholder-brand-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+      </div>
+    </div>
+
+    <!-- Category chips -->
+    <nav id="categories" class="bg-white border-b border-brand-100 overflow-x-auto no-scrollbar">
+      <div id="cat-list" class="max-w-3xl mx-auto px-4 py-2 flex gap-2 whitespace-nowrap"></div>
+    </nav>
+  </header>
+
+  <!-- Active order tracker chip -->
+  <div id="track-chip" class="hidden max-w-3xl mx-auto px-4 mt-3"></div>
+
+  <!-- ============ MENU ============ -->
+  <main class="max-w-3xl mx-auto px-4 pt-4">
+    <div id="menu-skeleton" class="space-y-3">
+      <div class="skeleton h-24"></div><div class="skeleton h-24"></div><div class="skeleton h-24"></div><div class="skeleton h-24"></div>
+    </div>
+    <div id="menu-root" class="space-y-8"></div>
+    <div id="menu-empty" class="hidden text-center text-brand-600 py-16">
+      <div class="text-5xl mb-2">🍞</div>
+      <p class="font-semibold">No items to show</p>
+      <p class="text-sm text-brand-400">Try a different search or check back soon.</p>
+    </div>
+  </main>
+
+  <!-- ============ FLOATING CART BAR ============ -->
+  <div id="cart-bar" class="hidden fixed bottom-0 inset-x-0 z-40 pb-safe px-4 pt-2 bg-gradient-to-t from-brand-50 via-brand-50/90 to-transparent">
+    <button id="open-cart" class="btn-press w-full max-w-3xl mx-auto flex items-center justify-between bg-brand-800 text-white rounded-2xl px-5 py-3.5 shadow-xl">
+      <span class="flex items-center gap-3">
+        <span id="cart-count" class="bg-amber-400 text-brand-900 font-bold rounded-full w-7 h-7 flex items-center justify-center text-sm">0</span>
+        <span class="font-semibold">View Cart</span>
+      </span>
+      <span id="cart-total-bar" class="font-bold">₹0.00</span>
+    </button>
+  </div>
+
+  <!-- ============ CART DRAWER ============ -->
+  <div id="cart-modal" class="hidden fixed inset-0 z-50">
+    <div id="cart-backdrop" class="absolute inset-0 bg-black/50 fade-in"></div>
+    <div class="sheet-up absolute bottom-0 inset-x-0 max-w-3xl mx-auto bg-white rounded-t-3xl max-h-[88vh] flex flex-col shadow-2xl">
+      <div class="px-5 pt-4 pb-3 border-b border-brand-100 flex items-center justify-between">
+        <div>
+          <h2 class="font-display text-xl text-brand-800">Your Order</h2>
+          <p class="text-xs text-brand-500">Table <span class="cart-table-no font-semibold">--</span></p>
+        </div>
+        <button id="close-cart" class="w-9 h-9 rounded-full bg-brand-50 text-brand-700 text-lg btn-press" aria-label="Close">✕</button>
+      </div>
+      <div id="cart-items" class="flex-1 overflow-y-auto px-5 py-3 divide-y divide-brand-100"></div>
+      <div class="px-5 pt-3 border-t border-brand-100 pb-safe bg-brand-50/60 rounded-b-none">
+        <label class="block text-xs font-semibold text-brand-600 mb-1">Notes for the kitchen (optional)</label>
+        <input id="order-note" maxlength="140" placeholder="e.g. less sugar, no onions…"
+               class="w-full mb-3 px-3 py-2 rounded-xl border border-brand-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+        <div class="space-y-1 text-sm text-brand-700">
+          <div class="flex justify-between"><span>Subtotal</span><span id="bill-sub">₹0.00</span></div>
+          <div class="flex justify-between"><span id="bill-tax-label">Tax</span><span id="bill-tax">₹0.00</span></div>
+          <div class="flex justify-between text-lg font-bold text-brand-900 pt-1 border-t border-brand-200 mt-1"><span>Grand Total</span><span id="bill-total">₹0.00</span></div>
+        </div>
+        <button id="place-order" class="btn-press mt-3 w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3.5 rounded-2xl shadow-lg disabled:opacity-60 flex items-center justify-center gap-2">
+          <span id="place-label">Place Order</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TABLE NUMBER PROMPT ============ -->
+  <div id="table-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/60"></div>
+    <div class="relative bg-white rounded-3xl p-6 w-full max-w-sm text-center pop-in shadow-2xl">
+      <div class="text-4xl mb-2">🪑</div>
+      <h3 class="font-display text-xl text-brand-800">Which table are you at?</h3>
+      <p class="text-sm text-brand-500 mb-4">Scan the QR on your table, or enter the number below.</p>
+      <input id="table-input" type="number" min="1" inputmode="numeric" placeholder="e.g. 5"
+             class="w-full text-center text-2xl font-bold py-3 rounded-xl border-2 border-brand-200 focus:border-amber-500 focus:outline-none" />
+      <button id="table-save" class="btn-press mt-4 w-full bg-brand-800 text-white font-semibold py-3 rounded-xl">Continue</button>
+    </div>
+  </div>
+
+  <!-- ============ ORDER CONFIRMATION MODAL ============ -->
+  <div id="confirm-modal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/60 fade-in"></div>
+    <div class="relative bg-white rounded-3xl p-6 w-full max-w-sm pop-in shadow-2xl max-h-[92vh] overflow-y-auto">
+      <div class="text-center">
+        <div class="mx-auto w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-3xl mb-3">✓</div>
+        <h3 class="font-display text-2xl text-brand-800">Order Placed!</h3>
+        <p class="text-sm text-brand-500">Thank you! Your order has gone to our kitchen.</p>
+      </div>
+      <div class="mt-4 bg-brand-50 rounded-2xl p-4 text-sm space-y-1">
+        <div class="flex justify-between"><span class="text-brand-500">Order ID</span><span id="cf-code" class="font-mono font-bold">--</span></div>
+        <div class="flex justify-between"><span class="text-brand-500">Table</span><span id="cf-table" class="font-semibold">--</span></div>
+        <div class="flex justify-between"><span class="text-brand-500">Total</span><span id="cf-total" class="font-bold">--</span></div>
+      </div>
+
+      <h4 class="mt-5 mb-2 text-sm font-semibold text-brand-700">Live Order Tracking</h4>
+      <div id="cf-steps" class="flex items-start justify-between text-center"></div>
+      <p id="cf-msg" class="mt-4 text-center text-sm font-medium text-brand-700"></p>
+
+      <div class="mt-5 flex gap-2">
+        <button id="cf-close" class="btn-press flex-1 bg-brand-800 text-white font-semibold py-3 rounded-xl">Keep Browsing</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="customer.js"></script>
+</body>
+</html>

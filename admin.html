@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jannat Bakery – Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="tailwind-config.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="min-h-screen admin-page">
+
+  <!-- ============ PIN LOGIN ============ -->
+  <div id="login" class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-brand-900/90" style="background-image: linear-gradient(rgba(17, 24, 39, 0.72), rgba(17, 24, 39, 0.78)), url('Jannat%20Bakery.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+    <form id="login-form" class="bg-white rounded-3xl p-8 w-full max-w-sm text-center pop-in shadow-2xl">
+      <img src="Jannat%20Bakery.jpg" alt="Jannat Bakery logo" class="mx-auto h-28 w-28 object-cover rounded-full border-4 border-brand-100 bg-white shadow-md mb-4" />
+      <h1 class="font-display text-2xl text-brand-800">Jannat Bakery</h1>
+      <p class="text-sm text-brand-500 mb-5">Admin access</p>
+      <input id="pin" type="password" inputmode="numeric" autocomplete="off" placeholder="Enter admin PIN"
+             class="w-full text-center text-xl tracking-widest py-3 rounded-xl border-2 border-brand-200 focus:border-amber-500 focus:outline-none" />
+      <p id="pin-err" class="hidden text-sm text-red-600 mt-2">Incorrect PIN</p>
+      <button class="btn-press mt-4 w-full bg-brand-800 text-white font-semibold py-3 rounded-xl">Unlock</button>
+    </form>
+  </div>
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="admin-header text-white sticky top-0 z-30">
+    <div class="max-w-screen-xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center gap-3 justify-between">
+      <div class="flex items-center gap-3">
+        <img src="Jannat%20Bakery.jpg" alt="Jannat Bakery logo" class="h-11 w-11 object-cover rounded-full border-2 border-white/80 bg-white shadow-sm" />
+        <div>
+          <h1 class="font-display text-lg leading-tight">Jannat Bakery</h1>
+          <p class="text-[10px] tracking-[.18em] uppercase text-brand-200 font-semibold">Admin dashboard</p>
+        </div>
+      </div>
+      <nav class="admin-tabs flex gap-1 rounded-xl p-1" aria-label="Dashboard sections">
+        <button data-tab="orders" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold">Orders</button>
+        <button data-tab="menu" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold">Menu</button>
+      </nav>
+      <div class="flex items-center gap-2 text-sm">
+        <a href="kitchen.html" target="_blank" rel="noopener" class="admin-header-link px-3 py-2 rounded-lg">Kitchen</a>
+        <a href="index.html?table=01" target="_blank" rel="noopener" class="admin-header-link px-3 py-2 rounded-lg">Customer view</a>
+        <button id="logout" class="admin-header-link admin-logout px-3 py-2 rounded-lg">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-screen-xl mx-auto px-4 sm:px-6 py-7 sm:py-9">
+
+    <!-- ============ ORDERS TAB ============ -->
+    <section id="tab-orders">
+      <div class="admin-page-heading flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 class="font-display text-3xl sm:text-4xl text-brand-900 mt-1">Order overview</h2>
+          <p class="text-sm text-brand-500 mt-2">Track today's performance and keep every order moving.</p>
+        </div>
+        <div class="admin-live-badge"><span></span> Live updates</div>
+      </div>
+
+      <!-- Analytics -->
+      <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 mb-6" id="stats">
+        <div class="skeleton h-28"></div><div class="skeleton h-28"></div><div class="skeleton h-28"></div><div class="skeleton h-28"></div>
+      </div>
+
+      <div class="grid lg:grid-cols-3 gap-4 mb-7">
+        <div class="admin-panel lg:col-span-2 p-4 sm:p-5">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h3 class="font-semibold text-brand-900">Hourly orders</h3>
+              <p class="text-xs text-brand-500 mt-1">Today's order activity</p>
+            </div>
+            <span class="admin-panel-icon">↗</span>
+          </div>
+          <div id="hour-chart" class="flex items-end gap-1 h-36"></div>
+        </div>
+        <div class="admin-panel p-4 sm:p-5">
+          <div class="mb-5">
+            <h3 class="font-semibold text-brand-900">Popular today</h3>
+            <p class="text-xs text-brand-500 mt-1">Best-selling menu items</p>
+          </div>
+          <ol id="top-items" class="space-y-3 text-sm"></ol>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="admin-filter-panel flex flex-col lg:flex-row lg:items-center gap-3 mb-4">
+        <div>
+          <h3 class="font-semibold text-brand-900">Orders</h3>
+          <p class="text-xs text-brand-500 mt-0.5">Filter by status or search a table/order</p>
+        </div>
+        <div id="status-filters" class="flex flex-wrap gap-2"></div>
+        <input id="order-search" type="search" placeholder="Search table / order ID…"
+               class="admin-search lg:ml-auto px-3 py-2.5 rounded-xl border bg-white text-sm w-full lg:w-64 focus:outline-none focus:ring-2 focus:ring-amber-400" />
+      </div>
+
+      <!-- Orders grid -->
+      <div id="orders-grid" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+      <p id="orders-empty" class="hidden text-center text-brand-500 py-16">No orders match this filter.</p>
+    </section>
+
+    <!-- ============ MENU TAB ============ -->
+    <section id="tab-menu" class="hidden">
+      <div class="admin-page-heading flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="admin-eyebrow">CATALOG MANAGEMENT</p>
+          <h2 class="font-display text-3xl sm:text-4xl text-brand-900 mt-1">Menu items</h2>
+          <p class="text-sm text-brand-500 mt-2">Update prices, availability and product details.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button id="seed-btn" class="hidden btn-press px-4 py-2.5 rounded-xl border border-brand-200 text-brand-700 text-sm font-semibold bg-white hover:bg-brand-50">Load sample menu</button>
+          <button id="add-item" class="btn-press px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold shadow-md shadow-amber-900/10">+ Add item</button>
+        </div>
+      </div>
+      <div class="admin-panel overflow-x-auto">
+        <table class="admin-menu-table w-full text-sm">
+          <thead class="text-brand-500 text-left">
+            <tr><th class="p-3">Item</th><th class="p-3">Category</th><th class="p-3">Price</th><th class="p-3">Availability</th><th class="p-3 text-right">Actions</th></tr>
+          </thead>
+          <tbody id="menu-body" class="divide-y divide-brand-100"></tbody>
+        </table>
+        <p id="menu-empty" class="hidden text-center text-brand-500 py-12">No menu items yet. Add one or load the sample menu.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ ITEM MODAL ============ -->
+  <div id="item-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div id="item-backdrop" class="absolute inset-0 bg-black/50 fade-in"></div>
+    <form id="item-form" class="relative bg-white rounded-3xl w-full max-w-md p-6 pop-in shadow-2xl max-h-[92vh] overflow-y-auto space-y-3">
+      <h3 id="item-title" class="font-display text-xl text-brand-800">Add Menu Item</h3>
+      <input type="hidden" id="f-id" />
+      <label class="block text-sm font-medium text-brand-700">Name
+        <input id="f-name" required maxlength="60" class="mt-1 w-full px-3 py-2 rounded-xl border border-brand-200 focus:outline-none focus:ring-2 focus:ring-amber-400" /></label>
+      <div class="grid grid-cols-2 gap-3">
+        <label class="block text-sm font-medium text-brand-700">Category
+          <input id="f-cat" required list="cat-options" placeholder="Cakes" class="mt-1 w-full px-3 py-2 rounded-xl border border-brand-200 focus:outline-none focus:ring-2 focus:ring-amber-400" />
+          <datalist id="cat-options"></datalist></label>
+        <label class="block text-sm font-medium text-brand-700">Price (₹)
+          <input id="f-price" type="number" min="0" step="0.5" required class="mt-1 w-full px-3 py-2 rounded-xl border border-brand-200 focus:outline-none focus:ring-2 focus:ring-amber-400" /></label>
+      </div>
+      <label class="block text-sm font-medium text-brand-700">Description
+        <textarea id="f-desc" rows="2" maxlength="140" class="mt-1 w-full px-3 py-2 rounded-xl border border-brand-200 focus:outline-none focus:ring-2 focus:ring-amber-400"></textarea></label>
+      <div class="grid grid-cols-3 gap-3">
+        <label class="block text-sm font-medium text-brand-700">Emoji
+          <input id="f-emoji" maxlength="4" placeholder="🍰" class="mt-1 w-full px-3 py-2 rounded-xl border border-brand-200 text-center focus:outline-none focus:ring-2 focus:ring-amber-400" /></label>
+        <label class="block col-span-2 text-sm font-medium text-brand-700">Image URL (optional)
+          <input id="f-img" type="url" placeholder="https://…" class="mt-1 w-full px-3 py-2 rounded-xl border border-brand-200 focus:outline-none focus:ring-2 focus:ring-amber-400" /></label>
+      </div>
+      <label class="flex items-center justify-between text-sm font-medium text-brand-700 pt-1">Available for ordering
+        <span class="switch"><input id="f-avail" type="checkbox" checked /><span class="slider"></span></span></label>
+      <div class="flex gap-2 pt-2">
+        <button type="button" id="item-cancel" class="btn-press flex-1 py-2.5 rounded-xl border border-brand-300 text-brand-700 font-semibold">Cancel</button>
+        <button type="submit" id="item-save" class="btn-press flex-1 py-2.5 rounded-xl bg-brand-800 text-white font-semibold">Save</button>
+      </div>
+    </form>
+  </div>
+
+  <script type="module" src="admin.js"></script>
+</body>
+</html>
