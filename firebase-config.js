@@ -5,7 +5,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc,
-  onSnapshot, query, orderBy, limit, serverTimestamp, writeBatch
+  onSnapshot, query, where, orderBy, limit, serverTimestamp, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* 1) PASTE YOUR FIREBASE WEB APP CONFIG HERE
@@ -46,7 +46,7 @@ export const ordersCol = collection(db, "orders");
 /* Re-export Firestore helpers so pages only import from this file */
 export {
   collection, doc, addDoc, setDoc, updateDoc, deleteDoc,
-  onSnapshot, query, orderBy, limit, serverTimestamp, writeBatch
+  onSnapshot, query, where, orderBy, limit, serverTimestamp, writeBatch
 };
 
 /* ---------- Shared helpers ---------- */

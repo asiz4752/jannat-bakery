@@ -2,7 +2,7 @@
  * Jannat Bakery – Customer table ordering (index.html)
  * ========================================================= */
 import {
-  APP, menuCol, ordersCol, db, doc, addDoc, onSnapshot, serverTimestamp,
+  APP, menuCol, ordersCol, db, doc, addDoc, onSnapshot, query, where, serverTimestamp,
   fmt, esc, calcBill, STATUS, toast, configBanner
 } from "./firebase-config.js";
 
@@ -17,7 +17,12 @@ const state = {
   category: "All",
   search: "",
   selectedItemId: null,
-  trackUnsub: null
+  trackedOrderIds: [],
+  trackedOrders: new Map(),
+  trackUnsubs: new Map(),
+  confirmationOrderIds: [],
+  pendingPositions: new Map(),
+  pendingOrderCount: 0
 };
 
 configBanner();
@@ -310,10 +315,16 @@ $("place-order").onclick = async () => {
       createdAt: serverTimestamp()
     });
 
-    localStorage.setItem("jb_last_order", JSON.stringify({ id: ref.id, code, table: state.table, total: bill.total }));
+    trackOrder(ref.id, {
+      orderCode: code,
+      table: state.table,
+      customerName: state.customerName,
+      total: bill.total,
+      status: "pending"
+    });
     state.cart = {}; saveCart(); $("order-note").value = "";
     renderMenu(); renderCart(); closeCart();
-    showConfirmation({ id: ref.id, code, table: state.table, total: bill.total });
+    showConfirmation();
   } catch (err) {
     console.error(err);
     toast("Could not place order. Please try again or call a waiter.", "err");
@@ -338,47 +349,133 @@ const MESSAGES = {
   cancelled: "❌ This order was cancelled. Please speak to our staff."
 };
 
-const showConfirmation = (o) => {
-  $("cf-code").textContent = o.code;
-  $("cf-table").textContent = "Table " + o.table;
-  $("cf-total").textContent = fmt(o.total);
-  $("confirm-modal").classList.remove("hidden");
-  trackOrder(o.id);
+const orderPosition = (id) => {
+  const position = state.pendingPositions.get(id);
+  return position ? `Pending position: ${position} of ${state.pendingOrderCount}` : "Pending position: updating…";
 };
 
-const renderSteps = (status) => {
+const orderSteps = (status) => {
   const idx = STEPS.findIndex((s) => s.key === status);
-  $("cf-steps").innerHTML = STEPS.map((s, i) => {
+  return STEPS.map((s, i) => {
     const cls = status === "cancelled" ? "" : i < idx || status === "completed" ? "done" : i === idx ? "current" : "";
     return `<div class="flex-1 flex flex-col items-center gap-1">
       <div class="step-dot ${cls}">${cls === "done" ? "✓" : i + 1}</div>
       <span class="text-[11px] ${cls ? "text-brand-800 font-semibold" : "text-stone-400"}">${s.label}</span></div>`;
   }).join("");
-  $("cf-msg").textContent = MESSAGES[status] || "";
 };
 
-const trackOrder = (id) => {
-  if (state.trackUnsub) state.trackUnsub();
-  state.trackUnsub = onSnapshot(doc(db, "orders", id), (snap) => {
-    if (!snap.exists()) return;
-    const status = snap.data().status;
-    renderSteps(status);
-    renderTrackChip(snap.id, snap.data());
-    if (status === "completed" || status === "cancelled") {
-      localStorage.removeItem("jb_last_order");
-      if (state.trackUnsub) { state.trackUnsub(); state.trackUnsub = null; }
+const renderConfirmation = () => {
+  const orders = state.confirmationOrderIds
+    .map((id) => ({ id, ...state.trackedOrders.get(id) }))
+    .filter((order) => order.orderCode);
+  $("confirm-title").textContent = orders.length > 1 ? "Orders Placed!" : "Order Placed!";
+  $("confirm-message").textContent = orders.length > 1
+    ? "Thank you! Your orders have gone to our kitchen."
+    : "Thank you! Your order has gone to our kitchen.";
+  $("cf-orders").innerHTML = orders.map((o) => {
+    const status = o.status || "pending";
+    const statusLabel = STATUS[status]?.label || STATUS.pending.label;
+    const position = status === "pending" ? `<p class="mt-2 text-xs font-semibold text-amber-800">${orderPosition(o.id)}</p>` : "";
+    return `<article class="bg-brand-50 rounded-2xl p-4 text-sm">
+      <div class="space-y-1">
+        <div class="flex justify-between gap-3"><span class="text-brand-500">Order ID</span><span class="font-mono font-bold text-right">${esc(o.orderCode || o.id)}</span></div>
+        <div class="flex justify-between gap-3"><span class="text-brand-500">Table Number</span><span class="font-semibold">Table ${esc(o.table)}</span></div>
+        ${o.customerName ? `<div class="flex justify-between gap-3"><span class="text-brand-500">Name</span><span class="font-semibold">${esc(o.customerName)}</span></div>` : ""}
+        <div class="flex justify-between gap-3"><span class="text-brand-500">Total Amount</span><span class="font-bold">${fmt(o.total)}</span></div>
+        <div class="flex justify-between gap-3 pt-1"><span class="text-brand-500">Status</span><span class="font-semibold">${esc(statusLabel)}</span></div>
+      </div>
+      ${position}
+      <div class="mt-4 flex items-start justify-between text-center">${orderSteps(status)}</div>
+      <p class="mt-4 text-center text-sm font-medium text-brand-700">${MESSAGES[status] || ""}</p>
+    </article>`;
+  }).join("");
+};
+
+const showConfirmation = () => {
+  state.confirmationOrderIds = [...state.trackedOrderIds];
+  renderConfirmation();
+  $("confirm-modal").classList.remove("hidden");
+};
+
+const saveTrackedOrderIds = () => {
+  try {
+    localStorage.setItem("jb_active_orders", JSON.stringify(state.trackedOrderIds));
+    localStorage.removeItem("jb_last_order");
+  } catch (err) {
+    console.error("Could not save active order tracking", err);
+  }
+};
+
+const trackOrder = (id, initialOrder = null) => {
+  if (!state.trackedOrderIds.includes(id)) state.trackedOrderIds.push(id);
+  if (initialOrder) state.trackedOrders.set(id, { id, ...initialOrder });
+  saveTrackedOrderIds();
+  renderTrackChip();
+  if (state.trackUnsubs.has(id)) return;
+  const unsubscribe = onSnapshot(doc(db, "orders", id), (snap) => {
+    if (!snap.exists()) {
+      state.trackedOrderIds = state.trackedOrderIds.filter((orderId) => orderId !== id);
+      state.trackedOrders.delete(id);
+      state.trackUnsubs.get(id)?.();
+      state.trackUnsubs.delete(id);
+      saveTrackedOrderIds();
+      renderTrackChip();
+      renderConfirmation();
+      return;
     }
+
+    const order = { id: snap.id, ...snap.data() };
+    state.trackedOrders.set(id, order);
+    if (order.status === "completed" || order.status === "cancelled") {
+      state.trackedOrderIds = state.trackedOrderIds.filter((orderId) => orderId !== id);
+      saveTrackedOrderIds();
+      state.trackUnsubs.get(id)?.();
+      state.trackUnsubs.delete(id);
+    }
+    renderTrackChip();
+    if (!$("confirm-modal").classList.contains("hidden")) renderConfirmation();
+  }, (err) => {
+    console.error("Could not track order", err);
+    toast("Could not update order tracking. Please refresh the page.", "err");
   });
+  state.trackUnsubs.set(id, unsubscribe);
 };
 
-const renderTrackChip = (id, o) => {
+onSnapshot(query(ordersCol, where("status", "==", "pending")), (snap) => {
+  const pendingOrders = snap.docs.sort((a, b) => {
+    const aTime = a.data().createdAt?.toMillis?.() || 0;
+    const bTime = b.data().createdAt?.toMillis?.() || 0;
+    return aTime - bTime || a.id.localeCompare(b.id);
+  });
+  state.pendingPositions = new Map(pendingOrders.map((order, index) => [order.id, index + 1]));
+  state.pendingOrderCount = pendingOrders.length;
+  renderTrackChip();
+  if (!$("confirm-modal").classList.contains("hidden")) renderConfirmation();
+}, (err) => {
+  console.error("Could not load pending order positions", err);
+  toast("Could not load pending order positions.", "err");
+});
+
+const renderTrackChip = () => {
   const chip = $("track-chip");
-  if (o.status === "completed" || o.status === "cancelled") { chip.classList.add("hidden"); return; }
+  const orders = state.trackedOrderIds
+    .map((id) => state.trackedOrders.get(id))
+    .filter(Boolean);
+  if (!orders.length) { chip.classList.add("hidden"); chip.innerHTML = ""; return; }
   chip.classList.remove("hidden");
-  chip.innerHTML = `<button class="btn-press w-full flex items-center justify-between bg-white border border-amber-300 rounded-2xl px-4 py-2.5 shadow-sm text-sm">
-      <span>📦 Order <b class="font-mono">${esc(o.orderCode)}</b> · ${esc(STATUS[o.status].label)}</span>
-      <span class="text-amber-600 font-semibold">Track →</span></button>`;
-  chip.firstElementChild.onclick = () => showConfirmation({ id, code: o.orderCode, table: o.table, total: o.total });
+  chip.innerHTML = `<div class="bg-white border border-amber-300 rounded-2xl px-4 py-3 shadow-sm">
+      <div class="flex items-center justify-between gap-3">
+        <p class="text-sm font-bold text-brand-800">📦 ${orders.length === 1 ? "Active order" : `${orders.length} active orders`}</p>
+        <button data-track-orders class="text-amber-700 font-semibold text-sm">Track all →</button>
+      </div>
+      <ul class="mt-2 space-y-1 text-sm">${orders.map((o) => {
+        const status = o.status || "pending";
+        const statusLabel = STATUS[status]?.label || STATUS.pending.label;
+        const position = status === "pending" ? ` · ${orderPosition(o.id)}` : "";
+        return `<li>Order <b class="font-mono">${esc(o.orderCode || o.id)}</b> · ${esc(statusLabel)}${esc(position)}</li>`;
+      }).join("")}</ul>
+    </div>`;
+  chip.querySelector("[data-track-orders]").onclick = showConfirmation;
 };
 
 $("cf-close").onclick = () => $("confirm-modal").classList.add("hidden");
@@ -386,9 +483,17 @@ $("cf-close").onclick = () => $("confirm-modal").classList.add("hidden");
 /* Resume tracking if the customer reloads the page */
 const resumeTracking = () => {
   try {
-    const last = JSON.parse(localStorage.getItem("jb_last_order") || "null");
-    if (last && last.id) trackOrder(last.id);
-  } catch (e) {}
+    const savedIds = JSON.parse(localStorage.getItem("jb_active_orders") || "null");
+    const lastOrder = JSON.parse(localStorage.getItem("jb_last_order") || "null");
+    const ids = Array.isArray(savedIds) ? savedIds : [];
+    if (lastOrder?.id) ids.push(lastOrder.id);
+    state.trackedOrderIds = [...new Set(ids.filter((id) => typeof id === "string" && id))];
+    state.trackedOrderIds.forEach((id) => trackOrder(id));
+    saveTrackedOrderIds();
+  } catch (err) {
+    console.error("Could not restore active order tracking", err);
+    toast("Could not restore order tracking.", "err");
+  }
 };
 
 /* ---------- Boot ---------- */
