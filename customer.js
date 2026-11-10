@@ -472,7 +472,7 @@ const renderTrackChip = () => {
         const status = o.status || "pending";
         const statusLabel = STATUS[status]?.label || STATUS.pending.label;
         const position = status === "pending" ? ` · ${orderPosition(o.id)}` : "";
-        return `<li>Order <b class="font-mono">${esc(o.orderCode || o.id)}</b> · ${esc(statusLabel)}${esc(position)}</li>`;
+        return `<li>Table <b>${esc(o.table)}</b> · ${esc(statusLabel)}${esc(position)}</li>`;
       }).join("")}</ul>
     </div>`;
   chip.querySelector("[data-track-orders]").onclick = showConfirmation;
