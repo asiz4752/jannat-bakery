@@ -147,15 +147,20 @@ const renderMenu = () => {
   let items = state.menu.filter((m) => (state.category === "All" || (m.category || "Others") === state.category));
   if (q) items = items.filter((m) => (m.name + " " + (m.description || "") + " " + (m.category || "")).toLowerCase().includes(q));
 
-  /* group by category; in-stock first */
-  const groups = {};
-  items.sort((a, b) => (b.available !== false) - (a.available !== false) || a.name.localeCompare(b.name))
-       .forEach((m) => { (groups[m.category || "Others"] ||= []).push(m); });
+  /* in-stock items first, then alphabetically */
+  items.sort((a, b) => (b.available !== false) - (a.available !== false) || a.name.localeCompare(b.name));
 
-  const html = Object.entries(groups).map(([cat, list]) => `
+  const groups = new Map();
+  items.forEach((item) => {
+    const category = item.category || "Others";
+    if (!groups.has(category)) groups.set(category, []);
+    groups.get(category).push(item);
+  });
+
+  const html = Array.from(groups, ([category, categoryItems]) => `
     <section>
-      <h2 class="font-display text-xl text-brand-800 mb-3 flex items-center gap-2"><span class="h-px flex-1 bg-brand-200"></span>${esc(cat)}<span class="h-px flex-1 bg-brand-200"></span></h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">${list.map(itemCard).join("")}</div>
+      <h2 class="font-display text-xl text-brand-800 mb-3 flex items-center gap-2"><span class="h-px flex-1 bg-brand-200"></span>${esc(category)}<span class="h-px flex-1 bg-brand-200"></span></h2>
+      <div class="customer-menu-grid">${categoryItems.map(itemCard).join("")}</div>
     </section>`).join("");
 
   $("menu-root").innerHTML = html;

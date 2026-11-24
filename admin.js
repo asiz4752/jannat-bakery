@@ -64,6 +64,7 @@ function boot() {
     orderBy("createdAt", "asc")
   ), (snap) => {
     state.monthOrders = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderStats();
     renderMonthlyOrders(now.getFullYear(), now.getMonth());
   }, (e) => {
     console.error(e);
@@ -85,20 +86,27 @@ const renderStats = () => {
   const valid = t.filter((o) => o.status !== "cancelled");
   const revenue = valid.reduce((s, o) => s + (o.total || 0), 0);
   const active = state.orders.filter((o) => ["pending", "preparing", "ready"].includes(o.status)).length;
-  const avg = valid.length ? revenue / valid.length : 0;
+  const monthRevenue = state.monthOrders.reduce((sum, order) => {
+    if (order.status === "cancelled") return sum;
+    const total = Number(order.total);
+    return sum + (Number.isFinite(total) ? total : 0);
+  }, 0);
 
   const cards = [
     { icon: "▤", label: "Orders today", value: t.length, iconTone: "admin-stat-icon--brown" },
     { icon: "₹", label: "Revenue today", value: fmt(revenue), iconTone: "admin-stat-icon--green" },
-    { icon: "↗", label: "Active orders", value: active, iconTone: "admin-stat-icon--amber" },
-    { icon: "◉", label: "Average order", value: fmt(avg), iconTone: "admin-stat-icon--blue" }
+    { icon: "↗", label: "Active orders", value: active, iconTone: "admin-stat-icon--amber", action: "active-orders" },
+    { icon: "◉", label: "This Month Revenue", value: fmt(monthRevenue), iconTone: "admin-stat-icon--blue" }
   ];
-  $("stats").innerHTML = cards.map((c) => `
-    <div class="admin-stat-card card-lift">
+  $("stats").innerHTML = cards.map((c) => {
+    const content = `
       <div class="admin-stat-icon ${c.iconTone}">${c.icon}</div>
       <p class="admin-stat-value">${c.value}</p>
-      <p class="admin-stat-label">${c.label}</p>
-    </div>`).join("");
+      <p class="admin-stat-label">${c.label}</p>`;
+    return c.action
+      ? `<button type="button" data-show-active-orders class="admin-stat-card card-lift w-full text-left" aria-label="Show active orders">${content}</button>`
+      : `<div class="admin-stat-card card-lift">${content}</div>`;
+  }).join("");
 
   /* top items */
   const counts = {};
@@ -108,6 +116,16 @@ const renderStats = () => {
     ? top.map(([n, q], i) => `<li class="admin-top-item"><span class="admin-top-rank">${String(i + 1).padStart(2, "0")}</span><span class="min-w-0 flex-1 truncate font-medium text-brand-800">${esc(n)}</span><b class="text-brand-600">${q} sold</b></li>`).join("")
     : `<li class="text-brand-400 text-sm py-2">No sales yet today</li>`;
 };
+
+$("stats").addEventListener("click", (e) => {
+  if (!e.target.closest("[data-show-active-orders]")) return;
+  state.filter = "active";
+  state.search = "";
+  $("order-search").value = "";
+  renderFilters();
+  renderOrders();
+  $("orders-filter-panel").scrollIntoView({ behavior: "smooth", block: "start" });
+});
 
 const renderMonthlyOrders = (year, month) => {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -144,7 +162,7 @@ const renderMonthlyOrders = (year, month) => {
 /* ---------- Order filters & list ---------- */
 const FILTERS = [
   ["active", "Active"], ["pending", "Pending"], ["preparing", "Preparing"],
-  ["ready", "Ready"], ["completed", "Completed"], ["cancelled", "Cancelled"], ["all", "All"]
+  ["ready", "Ready"], ["completed", "Completed"], ["cancelled", "Cancelled"], ["Paid", "Paid"]
 ];
 const countFor = (f) => state.orders.filter((o) => f === "all" ? true : f === "active" ? ["pending", "preparing", "ready"].includes(o.status) : o.status === f).length;
 
@@ -164,6 +182,9 @@ const renderOrders = () => {
   $("orders-empty").classList.toggle("hidden", list.length > 0);
   $("orders-grid").innerHTML = list.map((o) => {
     const d = toDate(o), st = STATUS[o.status] || STATUS.pending;
+    const orderDate = new Intl.DateTimeFormat("en-IN", {
+      day: "2-digit", month: "short", year: "numeric"
+    }).format(d);
     return `
     <article class="admin-order-card card-lift flex flex-col">
       <div class="flex items-start justify-between gap-3">
@@ -174,7 +195,7 @@ const renderOrders = () => {
         </div>
         ${statusBadge(o.status)}
       </div>
-      <p class="admin-order-time">${timeStr(d)} <span>·</span> ${minutesAgo(d)} min ago</p>
+      <p class="admin-order-time">${orderDate} <span>·</span> ${timeStr(d)} <span>·</span> ${minutesAgo(d)} min ago</p>
       <ul class="admin-order-items text-sm space-y-2 flex-1">
         ${(o.items || []).map((i) => `<li class="flex justify-between"><span>${i.qty} × ${esc(i.name)}</span><span class="text-brand-500">${fmt(i.price * i.qty)}</span></li>`).join("")}
       </ul>
