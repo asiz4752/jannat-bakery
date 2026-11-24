@@ -11,46 +11,37 @@ const state = { orders: [], muted: false, initialLoad: true, fresh: new Set() };
 
 configBanner();
 
-/* ---------- Audio chime (Web Audio API – no audio file needed) ---------- */
-let audioCtx = null;
-const ensureAudio = () => {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === "suspended") audioCtx.resume();
-};
-const chime = () => {
+/* ---------- Kitchen alert sounds ---------- */
+const newOrderSound = new Audio(new URL("./new_order.mp3", import.meta.url));
+const readySound = new Audio(new URL("./ready.mp3", import.meta.url));
+const playSound = (audio) => {
   if (state.muted) return;
-  try {
-    ensureAudio();
-    const notes = [880, 1108.73, 1318.51]; // A5, C#6, E6 – pleasant major arpeggio
-    notes.forEach((freq, i) => {
-      const t = audioCtx.currentTime + i * 0.16;
-      const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-      osc.type = "sine"; osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(0.35, t + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
-      osc.connect(gain).connect(audioCtx.destination);
-      osc.start(t); osc.stop(t + 0.65);
-    });
-  } catch (e) { console.warn("Audio unavailable", e); }
+  audio.currentTime = 0;
+  audio.play().catch((e) => console.warn("Kitchen alert sound could not play", e));
 };
 
-$("start-btn").onclick = () => { ensureAudio(); chime(); $("sound-gate").classList.add("hidden"); };
-$("test-sound").onclick = chime;
+$("start-btn").onclick = () => { playSound(newOrderSound); $("sound-gate").classList.add("hidden"); };
+$("test-sound").onclick = () => playSound(newOrderSound);
 $("mute-btn").onclick = () => {
   state.muted = !state.muted;
+  if (state.muted) {
+    [newOrderSound, readySound].forEach((audio) => { audio.pause(); audio.currentTime = 0; });
+  }
   $("mute-btn").textContent = state.muted ? "🔕 Sound Off" : "🔔 Sound On";
 };
 
 /* ---------- Real-time orders ---------- */
 onSnapshot(query(ordersCol, orderBy("createdAt", "asc"), limit(200)), (snap) => {
-  /* New orders after the first load → chime + highlight */
+  /* New orders after the first load → sound + highlight */
   if (!state.initialLoad) {
-    let hasNew = false;
+    let hasNew = false, hasReady = false;
     snap.docChanges().forEach((c) => {
-      if (c.type === "added" && c.doc.data().status === "pending") { state.fresh.add(c.doc.id); hasNew = true; }
+      const order = c.doc.data();
+      if (c.type === "added" && order.status === "pending") { state.fresh.add(c.doc.id); hasNew = true; }
+      if (c.type === "modified" && order.status === "ready" && state.orders.find((o) => o.id === c.doc.id)?.status !== "ready") hasReady = true;
     });
-    if (hasNew) chime();
+    if (hasNew) playSound(newOrderSound);
+    if (hasReady) playSound(readySound);
   }
   state.initialLoad = false;
   state.orders = snap.docs.map((d) => ({ id: d.id, ...d.data() }));

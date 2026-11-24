@@ -8,7 +8,7 @@ import {
 } from "./firebase-config.js";
 
 const $ = (id) => document.getElementById(id);
-const state = { menu: [], orders: [], monthOrders: [], filter: "active", search: "", tab: "orders" };
+const state = { menu: [], orders: [], ordersToday: null, ordersTodayError: false, monthOrders: [], filter: "active", search: "", tab: "orders" };
 
 configBanner();
 
@@ -53,6 +53,30 @@ function boot() {
     renderStats(); renderFilters(); renderOrders();
   }, (e) => { console.error(e); toast("Orders load failed – check Firebase config/rules", "err"); });
 
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const tomorrowStart = new Date(todayStart);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+  onSnapshot(query(
+    ordersCol,
+    where("createdAt", ">=", todayStart),
+    where("createdAt", "<", tomorrowStart),
+    orderBy("createdAt", "desc")
+  ), (snap) => {
+    state.ordersToday = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    state.ordersTodayError = false;
+    renderStats();
+    renderFilters();
+    if (state.filter === "today") renderOrders();
+  }, (e) => {
+    state.ordersTodayError = true;
+    console.error(e);
+    toast("Today's orders load failed – check Firebase config/rules", "err");
+    renderStats();
+    renderFilters();
+    if (state.filter === "today") renderOrders();
+  });
+
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
@@ -77,6 +101,8 @@ function boot() {
 
 /* ---------- Analytics ---------- */
 const todayOrders = () => {
+  if (state.ordersToday !== null) return state.ordersToday;
+  if (state.ordersTodayError) return [];
   const start = new Date(); start.setHours(0, 0, 0, 0);
   return state.orders.filter((o) => toDate(o) >= start);
 };
@@ -93,7 +119,7 @@ const renderStats = () => {
   }, 0);
 
   const cards = [
-    { icon: "▤", label: "Orders today", value: t.length, iconTone: "admin-stat-icon--brown" },
+    { icon: "▤", label: "Orders today", value: state.ordersTodayError ? "—" : state.ordersToday === null ? "…" : t.length, iconTone: "admin-stat-icon--brown", action: "today-orders" },
     { icon: "₹", label: "Revenue today", value: fmt(revenue), iconTone: "admin-stat-icon--green" },
     { icon: "↗", label: "Active orders", value: active, iconTone: "admin-stat-icon--amber", action: "active-orders" },
     { icon: "◉", label: "This Month Revenue", value: fmt(monthRevenue), iconTone: "admin-stat-icon--blue" }
@@ -104,7 +130,7 @@ const renderStats = () => {
       <p class="admin-stat-value">${c.value}</p>
       <p class="admin-stat-label">${c.label}</p>`;
     return c.action
-      ? `<button type="button" data-show-active-orders class="admin-stat-card card-lift w-full text-left" aria-label="Show active orders">${content}</button>`
+      ? `<button type="button" data-show-${c.action} class="admin-stat-card card-lift w-full text-left" aria-label="Show ${c.label.toLowerCase()}">${content}</button>`
       : `<div class="admin-stat-card card-lift">${content}</div>`;
   }).join("");
 
@@ -118,8 +144,10 @@ const renderStats = () => {
 };
 
 $("stats").addEventListener("click", (e) => {
-  if (!e.target.closest("[data-show-active-orders]")) return;
-  state.filter = "active";
+  const todayButton = e.target.closest("[data-show-today-orders]");
+  const activeButton = e.target.closest("[data-show-active-orders]");
+  if (!todayButton && !activeButton) return;
+  state.filter = todayButton ? "today" : "active";
   state.search = "";
   $("order-search").value = "";
   renderFilters();
@@ -161,10 +189,11 @@ const renderMonthlyOrders = (year, month) => {
 
 /* ---------- Order filters & list ---------- */
 const FILTERS = [
-  ["active", "Active"], ["pending", "Pending"], ["preparing", "Preparing"],
-  ["ready", "Ready"], ["completed", "Completed"], ["cancelled", "Cancelled"], ["Paid", "Paid"]
+  ["active", "Active"], ["today", "Today"],["completed", "paid"], ["cancelled", "Cancelled"]
 ];
-const countFor = (f) => state.orders.filter((o) => f === "all" ? true : f === "active" ? ["pending", "preparing", "ready"].includes(o.status) : o.status === f).length;
+const countFor = (f) => f === "today"
+  ? state.ordersTodayError ? "—" : state.ordersToday === null ? "…" : todayOrders().length
+  : state.orders.filter((o) => f === "all" ? true : f === "active" ? ["pending", "preparing", "ready"].includes(o.status) : o.status === f).length;
 
 const renderFilters = () => {
   $("status-filters").innerHTML = FILTERS.map(([k, l]) => `
@@ -176,7 +205,18 @@ const renderFilters = () => {
 $("order-search").oninput = (e) => { state.search = e.target.value.trim().toLowerCase(); renderOrders(); };
 
 const renderOrders = () => {
-  let list = state.orders.filter((o) => state.filter === "all" ? true : state.filter === "active" ? ["pending", "preparing", "ready"].includes(o.status) : o.status === state.filter);
+  if (state.filter === "today" && state.ordersTodayError) {
+    $("orders-empty").classList.add("hidden");
+    $("orders-grid").innerHTML = `<p class="text-sm text-red-600">Could not load today's orders.</p>`;
+    return;
+  }
+  if (state.filter === "today" && state.ordersToday === null) {
+    $("orders-empty").classList.add("hidden");
+    $("orders-grid").innerHTML = `<p class="text-sm text-brand-400">Loading today's orders…</p>`;
+    return;
+  }
+  const orderSource = state.filter === "today" ? todayOrders() : state.orders;
+  let list = orderSource.filter((o) => state.filter === "all" || state.filter === "today" ? true : state.filter === "active" ? ["pending", "preparing", "ready"].includes(o.status) : o.status === state.filter);
   if (state.search) list = list.filter((o) => (`table ${o.table} ${o.orderCode} ${o.customerName || ""}`).toLowerCase().includes(state.search) || String(o.table) === state.search.replace(/^0+/, ""));
 
   $("orders-empty").classList.toggle("hidden", list.length > 0);
