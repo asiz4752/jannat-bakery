@@ -14,7 +14,6 @@ configBanner();
 
 /* ---------- PIN gate (client-side convenience lock; see README for real security) ---------- */
 const unlock = () => { $("login").classList.add("hidden"); boot(); };
-if (sessionStorage.getItem("jb_admin") === "1") unlock();
 $("login-form").onsubmit = (e) => {
   e.preventDefault();
   if ($("pin").value === APP.adminPin) { sessionStorage.setItem("jb_admin", "1"); unlock(); }
@@ -254,3 +253,5 @@ $("seed-btn").onclick = async () => {
     toast("Sample menu loaded 🎉");
   } catch (err) { console.error(err); toast("Could not load sample menu", "err"); }
 };
+
+if (sessionStorage.getItem("jb_admin") === "1") unlock();
