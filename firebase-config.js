@@ -26,7 +26,7 @@ export const APP = {
   currency: "₹",
   taxRate: 0,             // GST disabled for this bakery
   taxLabel: "GST (0%)",
-  adminPin: "1"        // CHANGE THIS. Client-side gate only – see README for real security.
+  adminPin: "123"        // CHANGE THIS. Client-side gate only – see README for real security.
 };
 
 export const isConfigured = Boolean(

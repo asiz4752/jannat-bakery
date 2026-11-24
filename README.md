@@ -21,9 +21,9 @@ ES modules don't work from `file://`, so serve the folder over HTTP:
 
 ```bash
 cd jannat-bakery
-python3 -m http.server 8080      # or: npx serve .
+py -m http.server 8080 --bind 127.0.0.1      # or: npx serve .
 ```
-Open `http://localhost:8080/admin.html`, unlock with your PIN, go to **Menu → Load sample menu**, then open `index.html?table=05` on a phone and place an order. Open `kitchen.html`, tap **Start Kitchen Display**, and watch it arrive with a chime.
+Open `http://127.0.0.1:8080/admin.html`, unlock with your PIN, go to **Menu → Load sample menu**, then open `index.html?table=05` on a phone and place an order. Open `kitchen.html`, tap **Start Kitchen Display**, and watch it arrive with a chime.
 
 ## 3. Deploy
 Any static host works. With Firebase Hosting:
