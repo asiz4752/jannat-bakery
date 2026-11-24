@@ -3,12 +3,12 @@
  * ========================================================= */
 import {
   APP, db, menuCol, ordersCol, doc, addDoc, setDoc, updateDoc, deleteDoc, writeBatch,
-  onSnapshot, query, orderBy, limit,
+  onSnapshot, query, where, orderBy, limit,
   fmt, esc, toDate, timeStr, minutesAgo, statusBadge, STATUS, SEED_MENU, toast, configBanner
 } from "./firebase-config.js";
 
 const $ = (id) => document.getElementById(id);
-const state = { menu: [], orders: [], filter: "active", search: "", tab: "orders" };
+const state = { menu: [], orders: [], monthOrders: [], filter: "active", search: "", tab: "orders" };
 
 configBanner();
 
@@ -53,6 +53,24 @@ function boot() {
     renderStats(); renderFilters(); renderOrders();
   }, (e) => { console.error(e); toast("Orders load failed – check Firebase config/rules", "err"); });
 
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  $("daily-orders-subtitle").textContent = `${new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric" }).format(now)} · revenue excludes cancelled orders`;
+  onSnapshot(query(
+    ordersCol,
+    where("createdAt", ">=", monthStart),
+    where("createdAt", "<", nextMonthStart),
+    orderBy("createdAt", "asc")
+  ), (snap) => {
+    state.monthOrders = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderMonthlyOrders(now.getFullYear(), now.getMonth());
+  }, (e) => {
+    console.error(e);
+    $("daily-orders-chart").innerHTML = `<p class="text-sm text-red-600">Could not load this month's order activity.</p>`;
+    toast("Monthly orders load failed – check Firebase config/rules", "err");
+  });
+
   setInterval(renderOrders, 30000); // refresh "x min ago"
 }
 
@@ -82,19 +100,6 @@ const renderStats = () => {
       <p class="admin-stat-label">${c.label}</p>
     </div>`).join("");
 
-  /* hourly mini chart */
-  const hours = new Array(24).fill(0);
-  valid.forEach((o) => hours[toDate(o).getHours()]++);
-  const max = Math.max(1, ...hours);
-  const first = Math.max(0, hours.findIndex((h) => h > 0) - 1);
-  const shown = hours.slice(first < 0 ? 0 : first, 24).slice(0, 16);
-  $("hour-chart").innerHTML = shown.map((n, i) => `
-    <div class="flex-1 flex flex-col items-center justify-end h-full gap-1" title="${n} orders">
-      <span class="text-[10px] text-brand-500">${n || ""}</span>
-      <div class="admin-chart-bar w-full rounded-t" style="height:${(n / max) * 80}%;min-height:${n ? 4 : 2}px;${n ? "" : "opacity:.25"}"></div>
-      <span class="text-[10px] text-brand-400">${(first + i) % 24}h</span>
-    </div>`).join("");
-
   /* top items */
   const counts = {};
   valid.forEach((o) => (o.items || []).forEach((i) => (counts[i.name] = (counts[i.name] || 0) + i.qty)));
@@ -102,6 +107,38 @@ const renderStats = () => {
   $("top-items").innerHTML = top.length
     ? top.map(([n, q], i) => `<li class="admin-top-item"><span class="admin-top-rank">${String(i + 1).padStart(2, "0")}</span><span class="min-w-0 flex-1 truncate font-medium text-brand-800">${esc(n)}</span><b class="text-brand-600">${q} sold</b></li>`).join("")
     : `<li class="text-brand-400 text-sm py-2">No sales yet today</li>`;
+};
+
+const renderMonthlyOrders = (year, month) => {
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const days = Array.from({ length: daysInMonth }, () => ({ orders: 0, revenue: 0 }));
+
+  state.monthOrders.forEach((order) => {
+    const date = toDate(order);
+    if (date.getFullYear() !== year || date.getMonth() !== month) return;
+
+    const day = days[date.getDate() - 1];
+    day.orders++;
+    if (order.status !== "cancelled") {
+      const total = Number(order.total);
+      if (Number.isFinite(total)) day.revenue += total;
+    }
+  });
+
+  $("daily-orders-chart").innerHTML = days.map((day, index) => {
+    const date = new Intl.DateTimeFormat("en-IN", {
+      day: "numeric", month: "short", year: "numeric"
+    }).format(new Date(year, month, index + 1));
+    const orderLabel = `${day.orders} ${day.orders === 1 ? "order" : "orders"}`;
+    return `
+      <div class="flex items-center justify-between gap-3 rounded-lg border border-brand-100 bg-brand-50/50 px-3 py-2">
+        <span class="text-sm font-medium text-brand-800">${date}</span>
+        <span class="text-right">
+          <span class="block text-xs text-brand-500">${orderLabel}</span>
+          <span class="block text-sm font-semibold text-brand-900">${fmt(day.revenue)}</span>
+        </span>
+      </div>`;
+  }).join("");
 };
 
 /* ---------- Order filters & list ---------- */

@@ -81,8 +81,6 @@ body { font-family: Inter, system-ui, sans-serif; background: #fbf7f2; color: #3
 .admin-stat-value { position: relative; z-index: 1; margin-top: .75rem; color: #3f2616; font-size: clamp(1.2rem, 2.2vw, 1.65rem); line-height: 1.15; font-weight: 700; overflow-wrap: anywhere; }
 .admin-stat-label { position: relative; z-index: 1; color: #8b7969; font-size: .75rem; margin-top: .3rem; }
 .admin-panel-icon { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: .65rem; background: #fbf7f2; color: #a8703f; font-weight: 700; }
-.admin-chart-bar { background: linear-gradient(180deg, #e5a84d, #c47b2c); transition: height .25s ease; }
-#hour-chart > div { min-width: 0; }
 .admin-top-item { display: flex; align-items: center; gap: .65rem; min-width: 0; }
 .admin-top-rank { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: .6rem; color: #8f5a31; background: #fbf3e8; font-size: .68rem; font-weight: 700; flex-shrink: 0; }
 .admin-filter-panel { padding: .9rem 1rem; }

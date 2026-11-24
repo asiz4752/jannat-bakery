@@ -36,12 +36,12 @@
                 </div>
             </div>
             <nav class="admin-tabs flex gap-1 rounded-xl p-1" aria-label="Dashboard sections">
-                <button data-tab="orders" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold" aria-selected="true">Orders</button>
-                <button data-tab="menu" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold" aria-selected="false">Menu</button>
+                <button data-tab="orders" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold" aria-selected="true">Admin</button>
+                <button data-tab="menu" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold" aria-selected="false">Menus</button>
             </nav>
             <div class="flex items-center gap-2 text-sm">
-                <a href="kitchen.html" target="_blank" rel="noopener" class="admin-header-link px-3 py-2 rounded-lg">Kitchen</a>
-                <a href="index.html?table=01" target="_blank" rel="noopener" class="admin-header-link px-3 py-2 rounded-lg">Customer view</a>
+                <a href="kitchen.html" target="_blank" rel="noopener" class="admin-header-link px-3 py-2 rounded-lg">Kitchen Display</a>
+                <a href="index.html?table=01" target="_blank" rel="noopener" class="admin-header-link px-3 py-2 rounded-lg">Table Orders</a>
                 <button id="logout" class="admin-header-link admin-logout px-3 py-2 rounded-lg">Log out</button>
             </div>
         </div>
@@ -72,12 +72,12 @@
                 <div class="admin-panel lg:col-span-2 p-4 sm:p-5">
                     <div class="flex items-center justify-between mb-5">
                         <div>
-                            <h3 class="font-semibold text-brand-900">Hourly orders</h3>
-                            <p class="text-xs text-brand-500 mt-1">Today's order activity</p>
+                            <h3 class="font-semibold text-brand-900">Daily orders and revenue</h3>
+                            <p id="daily-orders-subtitle" class="text-xs text-brand-500 mt-1">This month's orders and revenue</p>
                         </div>
                         <span class="admin-panel-icon">↗</span>
                     </div>
-                    <div id="hour-chart" class="flex items-end gap-1 h-36" role="status">
+                    <div id="daily-orders-chart" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1" role="status">
                         <p class="self-center text-sm text-brand-400">Loading order data…</p>
                     </div>
                 </div>
